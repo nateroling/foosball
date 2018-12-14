@@ -17,11 +17,10 @@ interface PageTemplateProps {
         }
       }
     }
-    markdownRemark: {
-      html: string
-      excerpt: string
-      frontmatter: {
-        title: string
+    airtable: {
+      data: {
+        Date: string
+        ID: number
       }
     }
   }
@@ -31,8 +30,8 @@ const PageTemplate: React.SFC<PageTemplateProps> = ({ data }) => (
   <IndexLayout>
     <Page>
       <Container>
-        <h1>{data.markdownRemark.frontmatter.title}</h1>
-        <div dangerouslySetInnerHTML={{ __html: data.markdownRemark.html }} />
+        <h1>{data.airtable.data.ID}</h1>
+        <div>{data.airtable.data.Date}</div>
       </Container>
     </Page>
   </IndexLayout>
@@ -41,7 +40,7 @@ const PageTemplate: React.SFC<PageTemplateProps> = ({ data }) => (
 export default PageTemplate
 
 export const query = graphql`
-  query PageTemplateQuery($slug: String!) {
+  query PageTemplateQuery {
     site {
       siteMetadata {
         title
@@ -52,11 +51,10 @@ export const query = graphql`
         }
       }
     }
-    markdownRemark(fields: { slug: { eq: $slug } }) {
-      html
-      excerpt
-      frontmatter {
-        title
+    airtable(table: { eq: "Games" }, data: { ID: { eq: 1 } }) {
+      data {
+        Date
+        ID
       }
     }
   }
