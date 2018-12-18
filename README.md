@@ -1,6 +1,6 @@
 # Cartegraph Foosball
 
-Currently published at https://cranky-blackwell-cbd403.netlify.com/
+https://foos.netlify.com
 
 You'll need an API key from AirTable to run this locally.
 
