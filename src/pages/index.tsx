@@ -104,7 +104,7 @@ const IndexPage = (data: QueryResponse) => {
   console.log(games);
 
   const chartData = buildChartData(data.data.players.edges);
-  const eloGames: GameWithEloChange[] = buildElo(games);
+  const { playerElos: eloValues, games: eloGames } = buildElo(games);
 
   return (
     <IndexLayout>
@@ -113,7 +113,7 @@ const IndexPage = (data: QueryResponse) => {
           <h1>Foosball Stats</h1>
           <FoosballChart data={chartData} />
 
-          {/* <h2>Elo Ratings</h2>
+          <h2>Elo Ratings</h2>
           <table>
             <tbody>
               {Object.keys(eloValues)
@@ -125,7 +125,7 @@ const IndexPage = (data: QueryResponse) => {
                   </tr>
                 ))}
             </tbody>
-          </table> */}
+          </table>
 
           <h2>Games</h2>
           <table>
@@ -166,8 +166,10 @@ const buildChartData = (data: any[]) => {
   return values;
 };
 
-const buildElo = (games: Game[]): GameWithEloChange[] => {
-  const elo = new Elo();
+const buildElo = (
+  games: Game[]
+): { playerElos: { [_: string]: number }; games: GameWithEloChange[] } => {
+  const elo = new Elo({ default: 32 });
   const playerElos: { [_: string]: number } = {};
   const eloGames: GameWithEloChange[] = [];
 
@@ -239,7 +241,10 @@ const buildElo = (games: Game[]): GameWithEloChange[] => {
     });
   }
 
-  return eloGames;
+  return {
+    playerElos,
+    games: eloGames
+  };
 };
 
 interface QueryResponse {
