@@ -23,6 +23,10 @@ Chart.pluginService.register({
 });
 
 const Game = (props: { data: any }) => {
+  const g = props.data;
+  if (!g.Blue_Back || !g.Blue_Front || !g.Orange_Front || !g.Orange_Back) {
+    return null;
+  }
   return (
     <tr>
       <td>{props.data.Date}</td>
@@ -150,19 +154,21 @@ const buildChart = (element: HTMLCanvasElement, data: any) => {
 
 const buildElo = (games: any[]): { [_: string]: number } => {
   const elo = new Elo();
-  elo.setMin(100);
   const players: { [_: string]: number } = {};
   for (const game of games) {
     const g = game.node.data;
+    if (!g.Blue_Back || !g.Blue_Front || !g.Orange_Front || !g.Orange_Back) {
+      continue;
+    }
     const bB = g.Blue_Back[0].data.Name;
     const bF = g.Blue_Front[0].data.Name;
     const oF = g.Orange_Front[0].data.Name;
     const oB = g.Orange_Back[0].data.Name;
 
-    players[bB] = players[bB] || 100;
-    players[bF] = players[bF] || 100;
-    players[oF] = players[oF] || 100;
-    players[oB] = players[oB] || 100;
+    players[bB] = players[bB] || 1500;
+    players[bF] = players[bF] || 1500;
+    players[oF] = players[oF] || 1500;
+    players[oB] = players[oB] || 1500;
 
     const players_b = (players[bF] + players[bB]) / 2.0;
     const players_o = (players[oF] + players[oB]) / 2.0;
@@ -170,7 +176,10 @@ const buildElo = (games: any[]): { [_: string]: number } => {
     const bPoints = parseInt(g.Blue_Score, 10);
     const oPoints = parseInt(g.Orange_Score, 10);
 
-    if (isNaN(bPoints) || isNaN(oPoints)) {
+    const bWin = bPoints > oPoints ? 1 : 0;
+    const oWin = 1 - bWin;
+
+    if (isNaN(bPoints) || isNaN(oPoints) || bPoints === oPoints) {
       continue;
     }
 
@@ -181,17 +190,31 @@ const buildElo = (games: any[]): { [_: string]: number } => {
     const bs = bPoints / tPoints;
     const os = oPoints / tPoints;
 
-    const expected = [];
+    const blueOdds = elo.expectedScore(players_b, players_o);
+    const orangeOdds = elo.expectedScore(players_o, players_b);
 
-    expected[bB] = elo.expectedScore(players_b, players_o);
-    expected[bF] = elo.expectedScore(players_b, players_o);
-    expected[oF] = elo.expectedScore(players_o, players_b);
-    expected[oB] = elo.expectedScore(players_o, players_b);
+    const before: any = {};
+    before[bB] = players[bB];
+    before[bF] = players[bF];
+    before[oF] = players[oF];
+    before[oB] = players[oB];
 
-    players[bB] = elo.newRating(expected[bB], bs, players[bB]);
-    players[bF] = elo.newRating(expected[bF], bs, players[bF]);
-    players[oF] = elo.newRating(expected[oF], os, players[oF]);
-    players[oB] = elo.newRating(expected[oB], os, players[oB]);
+    players[bB] = elo.newRating(blueOdds, bWin, players[bB]);
+    players[bF] = elo.newRating(blueOdds, bWin, players[bF]);
+    players[oF] = elo.newRating(orangeOdds, oWin, players[oF]);
+    players[oB] = elo.newRating(orangeOdds, oWin, players[oB]);
+
+    const change: any = {};
+    change[bB] = players[bB] - before[bB];
+    change[bF] = players[bF] - before[bF];
+    change[oF] = players[oF] - before[oF];
+    change[oB] = players[oB] - before[oB];
+
+    console.log(
+      `${bB} (${change[bB]}) & ${bF} (${
+        change[bF]
+      }) ${bPoints} vs ${oPoints} ${oF} (${change[oF]}) & ${oB} (${change[oB]})`
+    );
   }
   return players;
 };
