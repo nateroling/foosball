@@ -167,10 +167,19 @@ const buildElo = (games: any[]): { [_: string]: number } => {
     const players_b = (players[bF] + players[bB]) / 2.0;
     const players_o = (players[oF] + players[oB]) / 2.0;
 
-    const bs = parseInt(g.Blue_Score, 10);
-    const os = parseInt(g.Orange_Score, 10);
+    const bPoints = parseInt(g.Blue_Score, 10);
+    const oPoints = parseInt(g.Orange_Score, 10);
 
-    if (isNaN(bs) || isNaN(os)) continue;
+    if (isNaN(bPoints) || isNaN(oPoints)) {
+      continue;
+    }
+
+    const tPoints = bPoints + oPoints;
+
+    // Score based on percentage of total goals your team got.
+    // 10 goals of 11 total > 10 goals of 19 total
+    const bs = bPoints / tPoints;
+    const os = oPoints / tPoints;
 
     const expected = [];
 
@@ -179,10 +188,10 @@ const buildElo = (games: any[]): { [_: string]: number } => {
     expected[oF] = elo.expectedScore(players_o, players_b);
     expected[oB] = elo.expectedScore(players_o, players_b);
 
-    players[bB] = elo.newRating(expected[bB], bs / 10.0, players[bB]);
-    players[bF] = elo.newRating(expected[bF], bs / 10.0, players[bF]);
-    players[oF] = elo.newRating(expected[oF], os / 10.0, players[oF]);
-    players[oB] = elo.newRating(expected[oB], os / 10.0, players[oB]);
+    players[bB] = elo.newRating(expected[bB], bs, players[bB]);
+    players[bF] = elo.newRating(expected[bF], bs, players[bF]);
+    players[oF] = elo.newRating(expected[oF], os, players[oF]);
+    players[oB] = elo.newRating(expected[oB], os, players[oB]);
   }
   return players;
 };
