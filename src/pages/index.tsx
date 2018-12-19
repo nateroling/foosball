@@ -7,6 +7,7 @@ import IndexLayout from "../layouts";
 
 import * as Chart from "chart.js";
 import * as ChartDataLabels from "chartjs-plugin-datalabels";
+const Elo = require("arpad");
 
 // Fill chart bg.
 Chart.pluginService.register({
@@ -63,15 +64,30 @@ class FoosballChart extends React.Component {
 
 const IndexPage = (data: any) => {
   const chartData = buildChartData(data.data.players.edges);
+  const eloValues = buildElo(data.data.games.edges);
   return (
     <IndexLayout>
       <Page>
         <Container>
           <h1>Foosball Stats</h1>
           <FoosballChart data={chartData} />
+          <h2>Elo Ratings</h2>
           <table>
             <tbody>
-              {data.data.allAirtable.edges.map((edge: any, idx: any) => (
+              {Object.keys(eloValues)
+                .sort((k1, k2) => eloValues[k2] - eloValues[k1])
+                .map((key: string) => (
+                  <tr key={key}>
+                    <td>{key}</td>
+                    <td>{eloValues[key]}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+          <h2>Games</h2>
+          <table>
+            <tbody>
+              {data.data.games.edges.map((edge: any, idx: any) => (
                 <Game key={idx} data={edge.node.data} />
               ))}
             </tbody>
@@ -95,7 +111,6 @@ const buildChartData = (data: any[]) => {
     arr[x][y].push(player.Name);
   });
   const values: {}[] = [];
-  console.log(arr);
   arr.forEach((xValue, xIndex) => {
     xValue.forEach((yValue, yIndex) => {
       values.push({
@@ -133,6 +148,45 @@ const buildChart = (element: HTMLCanvasElement, data: any) => {
   });
 };
 
+const buildElo = (games: any[]): { [_: string]: number } => {
+  const elo = new Elo();
+  elo.setMin(100);
+  const players: { [_: string]: number } = {};
+  for (const game of games) {
+    const g = game.node.data;
+    const bB = g.Blue_Back[0].data.Name;
+    const bF = g.Blue_Front[0].data.Name;
+    const oF = g.Orange_Front[0].data.Name;
+    const oB = g.Orange_Back[0].data.Name;
+
+    players[bB] = players[bB] || 100;
+    players[bF] = players[bF] || 100;
+    players[oF] = players[oF] || 100;
+    players[oB] = players[oB] || 100;
+
+    const players_b = (players[bF] + players[bB]) / 2.0;
+    const players_o = (players[oF] + players[oB]) / 2.0;
+
+    const bs = parseInt(g.Blue_Score, 10);
+    const os = parseInt(g.Orange_Score, 10);
+
+    if (isNaN(bs) || isNaN(os)) continue;
+
+    const expected = [];
+
+    expected[bB] = elo.expectedScore(players_b, players_o);
+    expected[bF] = elo.expectedScore(players_b, players_o);
+    expected[oF] = elo.expectedScore(players_o, players_b);
+    expected[oB] = elo.expectedScore(players_o, players_b);
+
+    players[bB] = elo.newRating(expected[bB], bs / 10.0, players[bB]);
+    players[bF] = elo.newRating(expected[bF], bs / 10.0, players[bF]);
+    players[oF] = elo.newRating(expected[oF], os / 10.0, players[oF]);
+    players[oB] = elo.newRating(expected[oB], os / 10.0, players[oB]);
+  }
+  return players;
+};
+
 export const query = graphql`
   {
     players: allAirtable(filter: { table: { eq: "Players" } }) {
@@ -146,7 +200,7 @@ export const query = graphql`
         }
       }
     }
-    allAirtable(filter: { table: { eq: "Games" } }) {
+    games: allAirtable(filter: { table: { eq: "Games" } }) {
       edges {
         node {
           data {

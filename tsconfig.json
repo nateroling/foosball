@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["chart.js"],
+    "types": ["chart.js", "node"],
     "module": "commonjs",
     "target": "esnext",
     "jsx": "preserve",
