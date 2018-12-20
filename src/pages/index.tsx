@@ -10,7 +10,17 @@ const Elo = require("arpad");
 
 interface Player {
   name: string;
+  gameCount: number;
+  winCount: number;
+  winPercent: number;
 }
+
+const ghostPlayer = {
+  name: "???",
+  gameCount: 0,
+  winCount: 0,
+  winPercent: 0
+};
 
 interface Game {
   id: string;
@@ -83,13 +93,33 @@ const Game = (props: { game: GameWithEloChange }) => {
   );
 };
 
+const parsePlayer = (data: any) => {
+  if (!data) {
+    return ghostPlayer;
+  }
+  const p = data;
+  const gameCount = parseInt(p.gameCount, 10);
+  const winCount = parseInt(p.winCount, 10);
+  const winPercent = 100 * (winCount / gameCount);
+  return {
+    gameCount,
+    winCount,
+    winPercent,
+    name: p.name as string
+  };
+};
+
 const IndexPage = (data: QueryResponse) => {
-  const players = data.data.players.edges.map(edge => edge.node.data);
+  const players: Player[] = data.data.players.edges.map(e =>
+    parsePlayer(e.node.data)
+  );
   const games: Game[] = data.data.games.edges.map(edge => {
     const g = edge.node.data;
-    const getPlayer = (player: any) => ({
-      name: player && player[0] && player[0].data ? player[0].data.name : ""
-    });
+    const getPlayer = (player: any) => {
+      return player && player[0] && player[0].data
+        ? parsePlayer(player[0].data)
+        : ghostPlayer;
+    };
 
     return {
       ...g,
@@ -103,14 +133,13 @@ const IndexPage = (data: QueryResponse) => {
   });
   console.log(games);
 
-  const chartData = buildChartData(data.data.players.edges);
+  const chartData = buildChartData(players);
   const { playerElos: eloValues, games: eloGames } = buildElo(games);
 
   return (
     <IndexLayout>
       <Page>
         <Container>
-          <h1>Foosball Stats</h1>
           <FoosballChart data={chartData} />
 
           <h2>Elo Ratings</h2>
@@ -143,15 +172,14 @@ const IndexPage = (data: QueryResponse) => {
 
 export default IndexPage;
 
-const buildChartData = (data: any[]) => {
+const buildChartData = (data: Player[]) => {
   const arr: string[][][] = [];
-  data.forEach(p => {
-    const player = p.node.data;
-    const x = player._xGames;
-    const y = Math.floor(player.Win__);
+  data.forEach(player => {
+    const x = player.gameCount;
+    const y = Math.floor(player.winPercent);
     arr[x] = arr[x] || [];
     arr[x][y] = arr[x][y] || [];
-    arr[x][y].push(player.Name);
+    arr[x][y].push(player.name);
   });
   const values: {}[] = [];
   arr.forEach((xValue, xIndex) => {
@@ -256,6 +284,7 @@ interface QueryResponse {
             data: {
               name: string;
               gameCount: string;
+              winCount: string;
             };
           };
         }
@@ -290,6 +319,7 @@ export const query = graphql`
           data {
             name: Name
             gameCount: _xGames
+            winCount: _xWins
           }
         }
       }

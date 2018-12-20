@@ -52,9 +52,9 @@ const buildChart = (element: HTMLCanvasElement, data: any) => {
     data: {
       datasets: [
         {
+          data,
           backgroundColor: "orange",
           label: "Win % vs Games Played",
-          data,
           datalabels: {
             align: "start",
             anchor: "start"

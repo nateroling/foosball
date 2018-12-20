@@ -4,14 +4,12 @@ require("dotenv").config();
 
 module.exports = {
   siteMetadata: {
-    title: "gatsby-starter-typescript-plus",
-    description:
-      "A starter kit for TypeScript-based Gatsby projects with sensible defaults.",
-    siteUrl: "https://gatsby-starter-typescript-plus.netlify.com",
+    title: "Foosball Stats",
+    description: "Foosball Statistics for Cartegraph",
+    siteUrl: "https://foos.netlify.com",
     author: {
-      name: "Resi Respati",
-      url: "https://twitter.com/resir014",
-      email: "resir014@gmail.com"
+      name: "Nate Roling",
+      url: null
     }
   },
   plugins: [
