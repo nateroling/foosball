@@ -52,20 +52,32 @@ const EloChangeView = (props: { eloChange: EloChange }) => {
   const color = props.eloChange.change > 0 ? "mediumseagreen" : "brown";
   const absval = Math.abs(props.eloChange.change);
   return (
-    <span
-      style={{
-        color,
-        minWidth: 30,
-        textAlign: "center",
-        backgroundColor: "moccasin",
-        borderRadius: 5,
-        paddingLeft: 2,
-        paddingRight: 2,
-        float: "right"
-      }}
-    >
-      {sign}
-      {absval}
+    <span>
+      <span
+        style={{
+          color,
+          borderRadius: 5,
+          paddingLeft: 2,
+          paddingRight: 4,
+          minWidth: 30,
+          textAlign: "center",
+          backgroundColor: "moccasin",
+          float: "right"
+        }}
+      >
+        <span
+          style={{
+            paddingLeft: 4,
+            fontSize: "70%",
+            marginRight: 5,
+            color: "black"
+          }}
+        >
+          {props.eloChange.before}
+        </span>
+        {sign}
+        {absval}
+      </span>
     </span>
   );
 };
